@@ -25,7 +25,8 @@ jobs:
           # The body of the release will be generated from the git tag message
           generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
 
   build-release-binaries:
     name: Build release binaries
