@@ -6,109 +6,175 @@ on:
       - "v[0-9]+.[0-9]+.[0-9]*"
 
 env:
-  CARGO_INCREMENTAL: 0
-  CARGO_NET_RETRY: 10
-  RUSTUP_MAX_RETRIES: 10
+  CARGO_TERM_COLOR: always
 
 jobs:
-  github_build:
+  # Job to create the GitHub Release itself
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+    steps:
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          # This creates a draft release. We will publish it in the final job.
+          draft: true
+          # The body of the release will be generated from the git tag message
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-release-binaries:
     name: Build release binaries
+    # Needs the upload_url from the create-release job to upload assets
+    needs: create-release
     strategy:
       fail-fast: false
       matrix:
         include:
+          # --- Linux Builds (using cross-compilation on a single runner) ---
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-            name: dnspod-ddns-x86_64-unknown-linux-musl.tar.gz
+            asset_name: ddns-x86_64-unknown-linux-musl.tar.gz
 
           - target: i686-unknown-linux-musl
             os: ubuntu-latest
-            name: dnspod-ddns-i686-unknown-linux-musl.tar.gz
+            asset_name: ddns-i686-unknown-linux-musl.tar.gz
 
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
-            name: dnspod-ddns-aarch64-unknown-linux-musl.tar.gz
+            asset_name: ddns-aarch64-unknown-linux-musl.tar.gz
 
-          - target: arm-unknown-linux-musleabihf
+          - target: armv7-unknown-linux-musleabihf # Corrected target name for ARMv7
             os: ubuntu-latest
-            name: dnspod-ddns-arm-unknown-linux-musleabihf.tar.gz
+            asset_name: ddns-armv7-unknown-linux-musleabihf.tar.gz
 
+          # --- macOS Builds (using native runners) ---
           - target: x86_64-apple-darwin
-            os: macOS-11
-            name: dnspod-ddns-x86_64-apple-darwin.tar.gz
+            os: macos-latest # Use macos-latest for better compatibility
+            asset_name: ddns-x86_64-apple-darwin.tar.gz
 
           - target: aarch64-apple-darwin
-            os: macOS-11
-            name: dnspod-ddns-aarch64-apple-darwin.tar.gz
+            os: macos-latest
+            asset_name: ddns-aarch64-apple-darwin.tar.gz
 
+          # --- Windows Builds (using native runners) ---
           - target: x86_64-pc-windows-msvc
             os: windows-latest
-            name: dnspod-ddns-x86_64-pc-windows-msvc.zip
+            asset_name: ddns-x86_64-pc-windows-msvc.zip
 
           - target: aarch64-pc-windows-msvc
             os: windows-latest
-            name: dnspod-ddns-aarch64-pc-windows-msvc.zip
+            asset_name: ddns-aarch64-pc-windows-msvc.zip
 
     runs-on: ${{ matrix.os }}
-    continue-on-error: true
     steps:
-      - name: Setup | Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup | Rust
-        uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable # Using a more modern action, defaults to stable
         with:
-          toolchain: nightly
-          override: true
-          profile: minimal
-          target: ${{ matrix.target }}
+          targets: ${{ matrix.target }}
 
-      - name: Build | Build
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --locked --target ${{ matrix.target }}
-          use-cross: ${{ matrix.os == 'ubuntu-latest' }}
-
-      - name: Post Build | Prepare artifacts [Windows]
-        if: matrix.os == 'windows-latest'
+      # --- Linux specific setup for cross-compilation ---
+      - name: Set up cross-compilation tools for Linux
+        if: runner.os == 'Linux'
         run: |
-          cd target/${{ matrix.target }}/release
-          strip dnspod-ddns.exe
-          7z a ../../../${{ matrix.name }} dnspod-ddns.exe
-          cd -
-      - name: Post Build | Prepare artifacts [-nix]
-        if: matrix.os != 'windows-latest'
+          sudo apt-get update
+          sudo apt-get install -y cross-build-essential-armhf cross-build-essential-arm64
+          # Install cross, the cross-compilation tool
+          cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Build binary
+        # Use `cross` for Linux runners, and `cargo` for others
         run: |
-          cd target/${{ matrix.target }}/release
-          strip dnspod-ddns || true
-          tar czvf ../../../${{ matrix.name }} dnspod-ddns
-          cd -
-      - name: Deploy | Upload artifacts
-        uses: actions/upload-artifact@v4
+          if [ "${{ runner.os }}" == "Linux" ]; then
+            cross build --release --locked --target ${{ matrix.target }}
+          else
+            cargo build --release --locked --target ${{ matrix.target }}
+          fi
+        env:
+          # This is needed for musl builds to link statically
+          RUSTFLAGS: "-C target-feature=+crt-static"
+
+      - name: Prepare artifact (create archive)
+        shell: bash
+        run: |
+          # Define paths and names
+          ARTIFACT_DIR="artifacts"
+          RELEASE_DIR="target/${{ matrix.target }}/release"
+          BINARY_NAME="ddns"
+
+          # Adjust binary name for Windows
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            BINARY_NAME="ddns.exe"
+          fi
+
+          # Create artifact directory
+          mkdir -p $ARTIFACT_DIR
+
+          # Move binary to a common location
+          mv "${RELEASE_DIR}/${BINARY_NAME}" "${ARTIFACT_DIR}/"
+
+          # Create archive
+          cd $ARTIFACT_DIR
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            7z a ../${{ matrix.asset_name }} .
+          else
+            tar czvf ../${{ matrix.asset_name }} .
+          fi
+
+      - name: Upload artifact to release
+        uses: actions/upload-release-asset@v1
         with:
-          name: ${{ matrix.name }}
-          path: ${{ matrix.name }}
-
-  upload_artifacts:
-    name: Add Build Artifacts to Release
-    needs: [github_build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Setup | Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup | Artifacts
-        uses: actions/download-artifact@v4
-
-      - name: Setup | Checksums
-        run: for file in dnspod-ddns-*/dnspod-ddns-*; do openssl dgst -sha256 -r "$file" | awk '{print $1}' > "${file}.sha256"; done
-
-      - name: Build | Add Artifacts to Release
-        uses: softprops/action-gh-release@v2
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./${{ matrix.asset_name }}
+          asset_name: ${{ matrix.asset_name }}
+          asset_content_type: application/octet-stream
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish-release:
+    name: Publish Release and Generate Checksums
+    needs: build-release-binaries
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all release assets
+        uses: actions/download-artifact@v4
         with:
-          files: dnspod-ddns-*/dnspod-ddns-*
+          # This special pattern downloads all artifacts from the current workflow run
+          pattern: release-asset-*
+          path: release-assets
+          merge-multiple: true # Merge all artifacts into one directory
+
+      - name: Generate checksums
+        run: |
+          cd release-assets
+          # Generate SHA256 checksums for all .gz and .zip files
+          for file in *.gz *.zip; do
+            sha256sum "$file" > "${file}.sha256"
+          done
+          # Create a single file with all checksums for easy verification
+          sha256sum *.gz *.zip > sha256sums.txt
+
+      - name: Upload checksums to release
+        uses: softprops/action-gh-release@v2
+        with:
+          # This uploads the checksum files to the existing draft release
+          files: |
+            release-assets/*.sha256
+            release-assets/sha256sums.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          # By setting draft to false on the same tag, it publishes the release
+          draft: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,6 +1,6 @@
 [package]
 name = "ddns"
-version = "0.2.0"                                                            # A new beginning deserves a new version
+version = "0.2.1"                                                            # A new beginning deserves a new version
 authors = ["hardy <luohf@infinilabs.com>"]
 edition = "2024"
 description = "A modern, async DDNS tool for DNSPod with IPv4/IPv6 support."
