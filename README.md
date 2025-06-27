@@ -2,7 +2,6 @@
 
 A modern, fast, and reliable DDNS (Dynamic DNS) client for [DNSPod](https://www.dnspod.cn/), written in Rust. 🦀
 
-[![crates.io](https://img.shields.io/crates/v/ddns.svg)](https://crates.io/crates/ddns)
 [![Build Status](https://github.com/luohoufu/dnspod-ddns/actions/workflows/ci.yml/badge.svg)](https://github.com/luohoufu/dnspod-ddns/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
