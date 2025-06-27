@@ -7,63 +7,47 @@
 # More details at https://github.com/rust-lang/rust-clippy
 # and https://rust-lang.github.io/rust-clippy/
 
-# A more modern and optimized workflow for rust-clippy analysis.
-name: Clippy Analysis
+name: Clippy
 
 on:
   push:
     branches: ["main"]
   pull_request:
+    # The branches below must be a subset of the branches above
     branches: ["main"]
   schedule:
-    - cron: "30 23 * * *" # Changed time slightly to avoid peak loads
+    - cron: "22 15 * * 1"
 
 jobs:
-  clippy_check: # Renamed job for clarity
-    name: Run Clippy Linter
+  clippy:
+    name: Clippy
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
-      # `security-events: write` is required to upload SARIF results to GitHub's code scanning.
       security-events: write
-
+      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4 # Use the latest version of checkout action
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install Rust toolchain
-        # Use a more modern and efficient action for setting up the toolchain.
-        # It handles caching automatically. `clippy` is included by default.
         uses: dtolnay/rust-toolchain@stable
-
-      - name: Install SARIF tools with caching
-        # This step uses cargo-binstall for faster installation and caches the tools.
-        uses: baptiste0928/cargo-install@v3
         with:
-          # `cargo-binstall` provides pre-compiled binaries, which is much faster than `cargo install`.
-          tool: cargo-binstall
-          # The tools we need for SARIF conversion.
-          crates: clippy-sarif, sarif-fmt
+          components: clippy
 
-      - name: Run Clippy and generate SARIF report
-        # We run clippy with specific arguments to ensure it generates output even if there are no warnings.
-        # The output is directly piped to the sarif conversion tools.
-        # `continue-on-error` is important because clippy will exit with a non-zero code if it finds issues,
-        # but we still want to upload the results.
-        run: |
-          cargo clippy \
-            --all-targets \
-            --all-features \
-            --message-format=json \
-            -- -D warnings | # Treat warnings as errors to ensure they are reported
-          clippy-sarif | tee results.sarif | sarif-fmt
+      - name: Install sarif tools
+        uses: taiki-e/install-action@v2
+        with:
+          tool: clippy-sarif,sarif-fmt
+
+      - name: Run rust-clippy
+        run: cargo clippy
+          --all-targets
+          --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
         continue-on-error: true
 
-      - name: Upload SARIF results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3 # Use the latest version
+      - name: Upload analysis results to GitHub
+        uses: github/codeql-action/upload-sarif@v3
         with:
-          # Path to the SARIF file which will be uploaded to the Code Scanning tab.
-          sarif_file: results.sarif
-          # Category helps group multiple analysis tools in the UI.
-          category: clippy
+          sarif_file: rust-clippy-results.sarif
+          wait-for-processing: true

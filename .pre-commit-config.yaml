@@ -1,0 +1,41 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-toml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.31.1
+    hooks:
+      - id: typos
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.1
+    hooks:
+      - id: codespell
+  - repo: local
+    hooks:
+      - id: cargo-fmt
+        name: Cargo Fmt
+        entry: cargo fmt --check
+        language: system
+        types: [rust]
+        pass_filenames: false
+      - id: cargo-clippy
+        name: Cargo Clippy
+        entry: cargo clippy --workspace --all-targets -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+      - id: cargo-clippy-full
+        name: Cargo Clippy All Features
+        entry: cargo clippy --workspace --all-features --all-targets -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
+      - id: cargo-clippy-none
+        name: Cargo Clippy No Features
+        entry: cargo clippy --workspace --no-default-features --all-targets -- -D warnings
+        language: system
+        types: [rust]
+        pass_filenames: false
