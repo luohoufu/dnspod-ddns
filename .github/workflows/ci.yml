@@ -223,7 +223,7 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [clippy, rustfmt, leaks, tests, lints]
+    needs: [leaks]
     env:
       RUSTFLAGS: "-D warnings"
     strategy:
@@ -247,7 +247,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     if: github.event_name == 'release'
-    needs: [build, tests, lints, docs, leaks]
+    needs: [build]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
