@@ -240,12 +240,13 @@ jobs:
 
       - name: Build
         run: cross build --all-features --all-targets --release --target=${{ matrix.target }}
+
   release:
     name: Publish version
     runs-on: ubuntu-latest
     environment: production
     if: github.event_name == 'release'
-    needs: [build, test, lints, docs, leaks]
+    needs: [build, tests, lints, docs, leaks]
     steps:
       - name: Checkout sources
         uses: actions/checkout@v3
