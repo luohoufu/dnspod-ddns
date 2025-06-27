@@ -33,19 +33,17 @@ RUN cargo build --release --target x86_64-unknown-linux-musl
 
 
 # --- Stage 2: The Final Image ---
-# We use the `scratch` image, which is the smallest possible image.
-# It's completely empty, perfect for a single, static binary.
-FROM scratch
+FROM alpine:latest
 
-# Copy the compiled, static binary from the builder stage.
-COPY --from=builder /usr/src/app/target/x86_64-unknown-linux-musl/release/ddns /ddns
+# Alpine uses musl libc, so it's compatible with our static build.
+# We add a non-root user for security.
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Set the user to a non-root user for better security.
-# Since `scratch` doesn't have users, we specify a user ID.
-# This requires the container runtime to support `-u <uid>`.
-# A value > 1000 is common for non-system users.
-USER 1001
+# Copy the compiled binary from the builder stage.
+COPY --from=builder /usr/src/app/target/x86_64-unknown-linux-musl/release/ddns /usr/local/bin/ddns
 
-# Set the entrypoint for the container. This is the command that will run
-# when the container starts.
-ENTRYPOINT ["/ddns"]
+# Switch to the non-root user.
+USER appuser
+
+# Set the entrypoint for the container.
+ENTRYPOINT ["ddns"]

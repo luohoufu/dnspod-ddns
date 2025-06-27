@@ -1,14 +1,42 @@
-name: auto-merge
+# This workflow automatically merges Dependabot pull requests.
+
+name: Dependabot auto-merge
 
 on:
-  pull_request:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - labeled
 
 jobs:
-  auto-merge:
+  dependabot:
     runs-on: ubuntu-latest
+
+    # Crucial security check: only run for pull requests from Dependabot.
+    if: github.actor == 'dependabot[bot]'
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: ahmadnassri/action-dependabot-auto-merge@v2
+      # This action doesn't require a checkout step.
+
+      # Use the correct, publicly available action for auto-merging.
+      - name: Dependabot auto-merge
+        uses: ahmadnassri/action-dependabot-auto-merge@v2.8.0 # Use the correct action
         with:
-          target: minor
+          # --- Merge Conditions ---
+
+          # 1. Target Branch: Only merge PRs targeting the 'main' branch.
+          target: main
+
+          # 2. GitHub Token: Required to perform actions on the PR.
+          #    This token has write permissions because we are using pull_request_target.
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # 3. Merge Method: Use 'squash' to keep the git history clean.
+          #    Other options: 'merge', 'rebase'.
+          merge-method: squash
+
+          # 4. PR Approval: Automatically approve the PR if it meets the criteria.
+          #    This is useful if your repository requires at least one approval to merge.
+          approve: true
