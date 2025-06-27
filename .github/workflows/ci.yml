@@ -198,7 +198,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install llvm
         # Required to resolve symbols in sanitizer output
@@ -206,8 +206,6 @@ jobs:
 
       - name: Install nightly toolchain
         uses: dtolnay/rust-toolchain@nightly
-
-      - uses: Swatinem/rust-cache@v2
 
       - name: Build
         env:
@@ -234,7 +232,7 @@ jobs:
           - x86_64-unknown-linux-gnu
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install cross
         uses: taiki-e/install-action@cross
@@ -250,7 +248,7 @@ jobs:
     needs: [build]
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install stable toolchain
         uses: dtolnay/rust-toolchain@stable
