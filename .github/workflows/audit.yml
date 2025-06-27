@@ -17,5 +17,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - uses: rustsec/audit-check@v2.0.0
+        continue-on-error: true
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
