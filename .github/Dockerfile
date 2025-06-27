@@ -49,7 +49,3 @@ USER 1001
 # Set the entrypoint for the container. This is the command that will run
 # when the container starts.
 ENTRYPOINT ["/ddns"]
-
-# (Optional) You can set default command-line arguments here.
-# These can be overridden when running `docker run`.
-# CMD ["--help"]
