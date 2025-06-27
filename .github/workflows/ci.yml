@@ -23,7 +23,7 @@ jobs:
     permissions:
       contents: none
     name: CI
-    needs: ["leak"]
+    needs: ["leaks"]
     runs-on: ubuntu-latest
     steps:
       - name: Failed
