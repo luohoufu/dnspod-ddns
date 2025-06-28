@@ -146,6 +146,8 @@ jobs:
       - name: Install SARIF tools
         run: cargo install sarif-fmt --locked
       - name: Check
+        env:
+          CARGO_CONFIG_PATHS: ""
         run: >
           cargo clippy --workspace ${{ matrix.flag }} --all-targets --message-format=json -- -D warnings --allow deprecated
           | clippy-sarif
@@ -158,6 +160,8 @@ jobs:
           sarif_file: clippy-results.sarif
           wait-for-processing: true
       - name: Report status
+        env:
+          CARGO_CONFIG_PATHS: ""
         run: cargo clippy --workspace ${{ matrix.flag }} --all-targets -- -D warnings --allow deprecated
   codespell:
     name: Codespell
