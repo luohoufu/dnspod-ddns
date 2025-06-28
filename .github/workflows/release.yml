@@ -127,7 +127,7 @@ jobs:
       - name: Generate checksums
         run: |
           cd release-assets
-          sha25um *.tar.gz *.zip > sha256sums.txt
+          sha256um *.tar.gz *.zip > sha256sums.txt
           cp $GITHUB_WORKSPACE/CHANGELOG.md .
 
       - name: Generate Changelog
