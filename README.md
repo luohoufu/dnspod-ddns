@@ -106,8 +106,7 @@ Print version information
 --domain "example.com" \
 --sub-domain "home" \
 --token "YOUR_ID,YOUR_TOKEN" \
---ipv6 \
---interval 0
+--interval 10
 ```
 
 ### Using Environment Variables
@@ -190,3 +189,6 @@ You can check the logs with `journalctl -u ddns.service -f`.
 ## 📄 License
 
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+
+## 📖 Resource
+DNSPod documentation https://docs.dnspod.cn/api/record-list/
