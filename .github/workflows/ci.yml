@@ -66,6 +66,8 @@ jobs:
       matrix:
         os: ["ubuntu-latest", "windows-latest", "macos-latest"]
         rust: ["nightly"]
+    env:
+      CARGO_CONFIG_PATHS: ""
     needs: ["lints"]
     continue-on-error: ${{ matrix.rust != 'stable' }}
     runs-on: ${{ matrix.os }}
