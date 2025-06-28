@@ -93,7 +93,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: release-asset-${{ matrix.target }}
-          path: ${{ steps.prep.outputs.asset_path }}
+          path: ${{ steps.prep.outputs.asset_name }}
 
   create-and-publish-release:
     name: Create and Publish Release
