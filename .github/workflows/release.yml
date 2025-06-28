@@ -107,19 +107,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install git-cliff
-        uses: baptiste0928/cargo-install@v3
+      - name: Generate a changelog
+        uses: orhun/git-cliff-action@v4
+        id: git-cliff
         with:
-          crates: git-cliff
-
-      - name: Generate Changelog
-        id: changelog
-        run: |
-          {
-            echo 'body<<EOF'
-            git-cliff --latest --strip-header
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
+          config: cliff.toml
+          args: --verbose
+        env:
+          OUTPUT: CHANGELOG.md
 
       - name: Download all release assets
         uses: actions/download-artifact@v4
@@ -132,6 +127,12 @@ jobs:
         run: |
           cd release-assets
           sha25um *.tar.gz *.zip > sha256sums.txt
+          cp $GITHUB_WORKSPACE/CHANGELOG.md .
+
+      - name: Generate Changelog
+        id: changelog
+        run: |
+          echo 'body=$(cat $GITHUB_WORKSPACE/CHANGELOG.md)' >> "$GITHUB_OUTPUT"
 
       - name: Create and Publish Release
         uses: softprops/action-gh-release@v2
@@ -140,6 +141,7 @@ jobs:
           files: |
             release-assets/*.tar.gz
             release-assets/*.zip
+            release-assets/*.md
             release-assets/sha256sums.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
