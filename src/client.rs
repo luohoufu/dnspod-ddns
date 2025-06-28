@@ -62,7 +62,10 @@ impl DnspodClient {
     /// Initializes the client and fetches the initial state from DNSPod.
     #[instrument(skip(token))]
     pub async fn new(token: String, domain: String, sub_domain: String) -> Result<Self> {
-        info!("Initializing DNSPod client for [{}.{}]", sub_domain, domain);
+        info!(
+            "👋 Initializing DNSPod client for [{}.{}]",
+            sub_domain, domain
+        );
         let client = reqwest::Client::builder()
             .timeout(std::time::Duration::from_secs(10))
             .build()?;
@@ -103,11 +106,14 @@ impl DnspodClient {
             Some(cached_state) => {
                 // We have a cached state (ID and IP).
                 if cached_state.ip == current_ip {
-                    trace!("IP for {} record has not changed.", record_type);
+                    trace!(
+                        "✅ [{}] IP has not changed from '{}'. No update needed.",
+                        record_type, cached_state.ip
+                    );
                     return Ok(());
                 }
                 info!(
-                    "IP for {} record changed from {} to {}. Updating...",
+                    "🔄 [{}] IP has changed from '{}' to '{}'. Updating record...",
                     record_type, cached_state.ip, current_ip
                 );
                 match self
@@ -120,7 +126,7 @@ impl DnspodClient {
                     }
                     Err(DdnsError::Api { code, .. }) if code == "8" => {
                         // "Record ID Error (8)"! Our state is stale.
-                        warn!("Record ID is outdated. Refreshing state and retrying...");
+                        warn!("❗️Record ID is outdated. Refreshing state and retrying...");
                         // Drop the lock before calling another method on `self` to avoid deadlock.
                         drop(state);
                         self.refresh_state().await?;
@@ -129,8 +135,9 @@ impl DnspodClient {
                         // Or we could retry immediately here. For simplicity, we'll let the next tick handle it.
                         return Err(DdnsError::Api {
                             code: "8".to_string(),
-                            message: "State refreshed after Record ID error. Please retry."
-                                .to_string(),
+                            message:
+                                "State refreshed after Record ID error. The next cycle will retry."
+                                    .to_string(),
                         });
                     }
                     Err(e) => return Err(e),
@@ -139,8 +146,8 @@ impl DnspodClient {
             None => {
                 // No cached state, means no record exists. Create it.
                 info!(
-                    "No {} record found in local state. Creating...",
-                    record_type
+                    "✨ No {} No existing record found. Creating new record with IP '{}'...",
+                    record_type, current_ip
                 );
                 drop(state); // Drop lock before async operation
                 let new_record = self.create_record(record_type, current_ip).await?;
@@ -163,7 +170,7 @@ impl DnspodClient {
     /// Fetches all records and updates the internal state.
     #[instrument(skip(self))]
     async fn refresh_state(&self) -> Result<()> {
-        trace!("Refreshing local record state from DNSPod...");
+        trace!("🌐 Refreshing local record state from DNSPod...");
         let records = self.list_records().await?;
         let mut state = self.state.lock().await;
 
@@ -183,7 +190,7 @@ impl DnspodClient {
             }
         }
         info!(
-            "State refreshed: A={:?}, AAAA={:?}",
+            "💾 State refreshed: A record found ({}), AAAA record found ({})",
             state.a.is_some(),
             state.aaaa.is_some()
         );
