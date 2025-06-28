@@ -76,6 +76,7 @@ jobs:
           mkdir -p target/${{ matrix.target }}/release
           echo "asset_name=${ASSET_NAME}" >> $GITHUB_OUTPUT
           echo "asset_path=${ASSET_PATH}" >> $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
 
       - name: Package artifact
         shell: bash
