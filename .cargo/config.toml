@@ -1,6 +1,0 @@
-[target.'cfg(not(proc_macro))']
-rustflags = ["-Z", "sanitizer=address"]
-
-[build]
-# We still need to tell cargo to use the nightly toolchain for the -Z flag
-rustc-flags = ["-Z", "unstable-options"]
