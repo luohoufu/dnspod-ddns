@@ -2,7 +2,8 @@
 
 A modern, fast, and reliable DDNS (Dynamic DNS) client for [DNSPod](https://www.dnspod.cn/), written in Rust. 🦀
 
-[![Build Status](https://github.com/luohoufu/dnspod-ddns/actions/workflows/ci.yml/badge.svg)](https://github.com/luohoufu/dnspod-ddns/actions/workflows/ci.yml)
+[![CI](https://github.com/luohoufu/dnspod-ddns/actions/workflows/ci.yml/badge.svg)](https://github.com/luohoufu/dnspod-ddns/actions/workflows/ci.yml)
+[![Release](https://github.com/luohoufu/dnspod-ddns/actions/workflows/release.yml/badge.svg)](https://github.com/luohoufu/dnspod-ddns/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 `dnspod-ddns` automatically checks your public IP address and updates your DNSPod DNS records, ensuring your domain always points to your home network, server, or any device with a dynamic IP.
