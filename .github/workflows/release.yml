@@ -133,7 +133,11 @@ jobs:
       - name: Generate Changelog
         id: changelog
         run: |
-          echo 'body=$(cat $GITHUB_WORKSPACE/CHANGELOG.md)' >> "$GITHUB_OUTPUT"
+          {
+            echo 'body<<EOF'
+            cat CHANGELOG.md
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create and Publish Release
         uses: softprops/action-gh-release@v2
