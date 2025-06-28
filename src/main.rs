@@ -10,7 +10,7 @@ use std::env;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use tokio::task::JoinHandle;
 use tokio::time::{self, Duration};
-use tracing::{error, info, trace, warn};
+use tracing::{debug, error, info, trace, warn};
 
 // The single, dual-stack-aware IP detection service.
 const IP_SERVICE_URL: &str = "https://test.ipw.cn";
@@ -83,7 +83,7 @@ async fn run_ddns_checks(
     http_client_v4: &Client,
     http_client_v6: Option<&Client>,
 ) {
-    info!("🔎 Starting scheduled DDNS check cycle...");
+    debug!("🔎 Starting scheduled DDNS check cycle...");
     let mut tasks: Vec<JoinHandle<()>> = Vec::new();
 
     // --- IPv4 Task ---
@@ -124,5 +124,5 @@ async fn run_ddns_checks(
         }
     }
 
-    info!("🏁 DDNS check cycle finished.");
+    debug!("🏁 DDNS check cycle finished.");
 }
