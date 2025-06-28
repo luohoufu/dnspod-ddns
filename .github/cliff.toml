@@ -8,8 +8,14 @@
 [changelog]
 # template for the changelog header
 header = """
-# Changelog\n
-All notable changes to this project will be documented in this file.\n
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](http://keepachangelog.com/)
+and this project adheres to [Semantic Versioning](http://semver.org/).
+
+<!-- next-header -->\n
 """
 # template for the changelog body
 # https://keats.github.io/tera/docs/#introduction
@@ -93,3 +99,4 @@ filter_commits = false
 topo_order = false
 # sort the commits inside sections by oldest/newest order
 sort_commits = "oldest"
+prepend_pattern = "<!-- next-header -->\n"
