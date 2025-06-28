@@ -23,7 +23,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       security-events: write
       actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
     steps:
@@ -41,6 +41,8 @@ jobs:
           tool: clippy-sarif,sarif-fmt
 
       - name: Run rust-clippy
+        env:
+          CARGO_CONFIG_PATHS: ""
         run: cargo clippy
           --all-targets
           --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt

@@ -1,6 +1,6 @@
 # This workflow automatically merges Dependabot pull requests.
 
-name: Dependabot auto-merge
+name: Dependabot AutoMerge
 
 on:
   pull_request_target:
