@@ -73,7 +73,7 @@ jobs:
           fi
           ASSET_NAME="${{ env.BINARY_NAME }}-${OS_NAME}${ASSET_EXT}"
           ASSET_PATH="target/${{ matrix.target }}/release/${{ env.BINARY_NAME }}${ASSET_EXT}"
-
+          mkdir -p target/${{ matrix.target }}/release
           echo "asset_name=${ASSET_NAME}" >> $GITHUB_OUTPUT
           echo "asset_path=${ASSET_PATH}" >> $GITHUB_OUTPUT
 
@@ -82,11 +82,11 @@ jobs:
         run: |
           cd target/${{ matrix.target }}/release
           if [ "${{ runner.os }}" == "Windows" ]; then
-            7z a ../../../${{ steps.prep.outputs.asset_name }} ${{ env.BINARY_NAME }}.exe
+            7z a $GITHUB_WORKSPACE/${{ steps.prep.outputs.asset_name }} ${{ env.BINARY_NAME }}.exe
           else
-            tar czvf ../../../${{ steps.prep.outputs.asset_name }} ${{ env.BINARY_NAME }}
+            tar czvf $GITHUB_WORKSPACE/${{ steps.prep.outputs.asset_name }} ${{ env.BINARY_NAME }}
           fi
-          cd -
+          ls -lr $GITHUB_WORKSPACE
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
