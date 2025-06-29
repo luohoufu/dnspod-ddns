@@ -1,10 +1,11 @@
-// src/main.rs
 mod args;
+mod probe;
 
 use anyhow::Result;
 use args::Args;
 use clap::Parser;
 use dnspod::DnspodClient;
+use probe::{NetworkProbe, NetworkStatus};
 use reqwest::Client;
 use std::env;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
@@ -68,8 +69,21 @@ async fn main() -> Result<()> {
             args.interval
         );
         let mut interval = time::interval(Duration::from_secs(args.interval));
+        let mut probe = NetworkProbe::new();
         loop {
             interval.tick().await;
+            // 1. Wait for the network to be healthy. This is a blocking call.
+            //    It will handle all retries and backoffs internally.
+            let status = probe.wait_for_network().await;
+
+            // 2. Once the network is confirmed to be up, log a message.
+            if status == NetworkStatus::JustRecovered {
+                info!("🌐 Network has recovered. Proceeding with DDNS checks.");
+            } else {
+                trace!("Network is online. Proceeding with DDNS checks.");
+            }
+
+            // 3. Run the DDNS checks for IPv4 or IPv6 concurrently.
             run_ddns_checks(&dnspod_client, &http_client_v4, http_client_v6.as_ref()).await;
         }
     }
