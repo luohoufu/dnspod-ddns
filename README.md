@@ -1,3 +1,5 @@
+English | [简体中文](./README_ZH.md)
+
 # 🚀 DNSPod DDNS
 
 A modern, fast, and reliable DDNS (Dynamic DNS) client for [DNSPod](https://www.dnspod.cn/), written in Rust. 🦀
@@ -13,8 +15,8 @@ A modern, fast, and reliable DDNS (Dynamic DNS) client for [DNSPod](https://www.
 ## ✨ Features
 
 - **Blazing Fast**: Built with Rust for minimal resource usage and high performance.
+- **Intelligent & Robust**: Quietly waits for network recovery during outages using exponential backoff, preventing log spam and unnecessary API requests.
 - **IPv4 & IPv6 Ready**: Simultaneously updates both `A` (IPv4) and `AAAA` (IPv6) records.
-- **Efficient**: Uses the official `Record.Ddns` API to minimize API calls.
 - **Cross-Platform**: Pre-compiled binaries are available for Linux, macOS, and Windows.
 - **Easy to Configure**: Configure via command-line arguments or environment variables.
 - **Run Anywhere**: Works perfectly in a Docker container, on a Raspberry Pi, your NAS, or any server.
@@ -35,13 +37,14 @@ The easiest way is to download a pre-compiled binary for your system from the [*
 
 ```bash
 # Example for Linux
+wget https://github.com/luohoufu/dnspod-ddns/releases/latest/download/ddns-x86_64-unknown-linux-musl.tar.gz
 tar -xzvf ddns-x86_64-unknown-linux-musl.tar.gz
 sudo mv ddns /usr/local/bin/
 ```
 
 ### 2. Using Cargo
 
-If you have the Rust toolchain installed, you can install `dnspod-ddns` directly from crates.io.
+If you have the Rust toolchain installed, you can install `dnspod-ddns` directly.
 
 ```bash
 cargo install ddns
@@ -93,7 +96,7 @@ Enable IPv6 (AAAA record) update.
 [env: DNSPOD_IPV6_ENABLED=]
 
 -h, --help
-Print help information (use `-h` for a summary)
+Print help information
 
 -V, --version
 Print version information
@@ -102,12 +105,13 @@ Print version information
 ### Quick Start Example
 
 ```bash
-# Run once to update both A and AAAA records for home.example.com
+# Check every 10 seconds to update both A and AAAA records for home.example.com
 ./ddns \
 --domain "example.com" \
 --sub-domain "home" \
 --token "YOUR_ID,YOUR_TOKEN" \
---interval 10
+--interval 10 \
+--ipv6
 ```
 
 ### Using Environment Variables
@@ -118,8 +122,8 @@ This is highly recommended for running as a service or in a container.
 export DNSPOD_DOMAIN="example.com"
 export DNSPOD_SUB_DOMAIN="home"
 export DNSPOD_TOKEN="YOUR_ID,YOUR_TOKEN"
-export DNSPOD_IPV6_ENABLED=false
-export DNSPOD_INTERVAL=10 # Check every 10 seconds
+export DNSPOD_IPV6_ENABLED=true
+export DNSPOD_INTERVAL=600 # Check every 10 minutes
 
 # Now you can just run the command without arguments
 ./ddns
@@ -154,12 +158,12 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-# Adjust your domain and sub-domain here
+# Adjust your domain, sub-domain, and other flags here
 ExecStart=/usr/local/bin/ddns --domain example.com --sub-domain home --ipv6
 
 # Load token from the environment file
 EnvironmentFile=-/etc/default/ddns
-# Set log level
+# Set log level (info, warn, error, debug, trace)
 Environment="RUST_LOG=info"
 
 # Run as a non-root user
@@ -191,5 +195,5 @@ You can check the logs with `journalctl -u ddns.service -f`.
 
 This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
 
-## 📖 Resource
-DNSPod documentation https://docs.dnspod.cn/api/record-list/
+## 📖 Resources
+- [DNSPod API Documentation](https://docs.dnspod.cn/api/record-list/)
