@@ -42,15 +42,7 @@ tar -xzvf ddns-x86_64-unknown-linux-musl.tar.gz
 sudo mv ddns /usr/local/bin/
 ```
 
-### 2. Using Cargo
-
-If you have the Rust toolchain installed, you can install `dnspod-ddns` directly.
-
-```bash
-cargo install ddns
-```
-
-### 3. From Source
+### 2. From Source
 
 ```bash
 git clone https://github.com/luohoufu/dnspod-ddns.git

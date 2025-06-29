@@ -42,15 +42,7 @@ tar -xzvf ddns-x86_64-unknown-linux-musl.tar.gz
 sudo mv ddns /usr/local/bin/
 ```
 
-### 2. 使用 Cargo 安装
-
-如果您安装了 Rust 工具链，可以直接从 crates.io 安装。
-
-```bash
-cargo install ddns
-```
-
-### 3. 从源码编译
+### 2. 从源码编译
 
 ```bash
 git clone https://github.com/luohoufu/dnspod-ddns.git
