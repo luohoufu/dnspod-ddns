@@ -38,14 +38,14 @@ struct ModifyResponse {
 
 #[derive(Deserialize, Debug)]
 pub struct CreatedRecord {
-    pub id: String,
+    pub id: u64,
     pub name: String,
     pub status: String,
 }
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct ApiRecord {
-    pub id: String,
+    pub id: u64,
     pub value: String,
     #[serde(rename = "type")]
     pub record_type: String,
@@ -54,7 +54,7 @@ pub struct ApiRecord {
 // --- Internal State Management ---
 #[derive(Default, Debug, Clone)]
 struct RecordState {
-    id: String,
+    id: u64,
     ip: String,
 }
 
@@ -133,7 +133,7 @@ impl DnspodClient {
                     record_type, cached_state.ip, current_ip
                 );
                 match self
-                    .modify_record(record_type, &cached_state.id, current_ip)
+                    .modify_record(record_type, cached_state.id, current_ip)
                     .await
                 {
                     Ok(_) => {
@@ -243,14 +243,16 @@ impl DnspodClient {
     async fn modify_record(
         &self,
         record_type: &str,
-        record_id: &str,
+        record_id: u64,
         ip: &str,
     ) -> Result<ApiRecord> {
         let mut params: HashMap<&'static str, &str> = HashMap::new();
+        let record_id_str = record_id.to_string();
+
         params.insert("login_token", &self.token);
         params.insert("format", "json");
         params.insert("domain", &self.domain);
-        params.insert("record_id", record_id);
+        params.insert("record_id", &record_id_str);
         params.insert("sub_domain", &self.sub_domain);
         params.insert("record_type", record_type);
         params.insert("record_line", "默认");
