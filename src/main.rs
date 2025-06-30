@@ -1,10 +1,12 @@
 mod args;
+mod dnspod;
+mod error;
 mod probe;
 
 use anyhow::Result;
 use args::Args;
 use clap::Parser;
-use dnspod::DnspodClient;
+use dnspod::{API_BASE, DnspodClient};
 use probe::{NetworkProbe, NetworkStatus};
 use reqwest::Client;
 use std::env;
@@ -31,6 +33,9 @@ async fn get_public_ip(client: &Client) -> Result<String> {
 #[tokio::main]
 async fn main() -> Result<()> {
     if env::var("RUST_LOG").is_err() {
+        // By wrapping this in an `unsafe` block, you are telling the compiler:
+        // "I guarantee that, at this point in the code, modifying this
+        // environment variable is thread-safe."
         unsafe {
             env::set_var("RUST_LOG", "info,ddns=info,dnspod=info");
         }
@@ -38,20 +43,17 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
 
     let args = Args::parse();
-    // DnspodClient::new is now async and has its own emoji log.
     let dnspod_client = DnspodClient::new(args.token, args.domain, args.sub_domain).await?;
 
-    // Client that is forced to use IPv4
     let http_client_v4 = Client::builder()
-        .local_address(IpAddr::V4(Ipv4Addr::UNSPECIFIED)) // Bind to 0.0.0.0
+        .local_address(IpAddr::V4(Ipv4Addr::UNSPECIFIED))
         .timeout(Duration::from_secs(10))
         .build()?;
 
-    // Client that is forced to use IPv6 (only build if needed)
     let http_client_v6 = if args.ipv6 {
         Some(
             Client::builder()
-                .local_address(IpAddr::V6(Ipv6Addr::UNSPECIFIED)) // Bind to ::
+                .local_address(IpAddr::V6(Ipv6Addr::UNSPECIFIED))
                 .timeout(Duration::from_secs(10))
                 .build()?,
         )
@@ -72,18 +74,22 @@ async fn main() -> Result<()> {
         let mut probe = NetworkProbe::new();
         loop {
             interval.tick().await;
-            // 1. Wait for the network to be healthy. This is a blocking call.
-            //    It will handle all retries and backoffs internally.
-            let status = probe.wait_for_network().await;
 
-            // 2. Once the network is confirmed to be up, log a message.
+            // 1. Wait for the core service to be healthy.
+            //    This will block with exponential backoff until the service is reachable.
+            let status = probe.wait_for_service(API_BASE).await;
+
+            // 2. Log a message about the service status.
             if status == NetworkStatus::JustRecovered {
-                info!("🌐 Network has recovered. Proceeding with DDNS checks.");
+                info!(
+                    "🌐 DNSPod service at '{}' has recovered. Proceeding with checks.",
+                    API_BASE
+                );
             } else {
-                trace!("Network is online. Proceeding with DDNS checks.");
+                trace!("DNSPod service is online. Proceeding with checks.");
             }
 
-            // 3. Run the DDNS checks for IPv4 or IPv6 concurrently.
+            // 3. Run the DDNS checks for IPv4/IPv6 now that we know the service is up.
             run_ddns_checks(&dnspod_client, &http_client_v4, http_client_v6.as_ref()).await;
         }
     }
@@ -105,12 +111,15 @@ async fn run_ddns_checks(
     let http_client_v4 = http_client_v4.clone();
     let v4_task = tokio::spawn(async move {
         trace!("[IPv4] 🕵️ Starting check...");
-        if let Ok(ip) = get_public_ip(&http_client_v4).await {
-            if let Err(e) = dnspod_client_v4.update_if_needed(&ip).await {
-                warn!("🚨 [IPv4] Update process failed: {}", e);
+        match get_public_ip(&http_client_v4).await {
+            Ok(ip) => {
+                if let Err(e) = dnspod_client_v4.update_if_needed(&ip).await {
+                    warn!("🚨 [IPv4] Update process failed: {}", e);
+                }
             }
-        } else {
-            trace!("[IPv4] 💨 Could not get public IPv4.");
+            Err(e) => {
+                trace!("[IPv4] 💨 Could not get public IPv4: {}", e);
+            }
         }
     });
     tasks.push(v4_task);
@@ -121,12 +130,15 @@ async fn run_ddns_checks(
         let http_client_v6 = client_v6.clone();
         let v6_task = tokio::spawn(async move {
             trace!("[IPv6] 🕵️ Starting check...");
-            if let Ok(ip) = get_public_ip(&http_client_v6).await {
-                if let Err(e) = dnspod_client_v6.update_if_needed(&ip).await {
-                    warn!("🚨 [IPv6] Update process failed: {}", e);
+            match get_public_ip(&http_client_v6).await {
+                Ok(ip) => {
+                    if let Err(e) = dnspod_client_v6.update_if_needed(&ip).await {
+                        warn!("🚨 [IPv6] Update process failed: {}", e);
+                    }
                 }
-            } else {
-                trace!("[IPv6] 💨 Could not get public IPv6 (network may not support it).");
+                Err(e) => {
+                    trace!("[IPv6] 💨 Could not get public IPv6: {}", e);
+                }
             }
         });
         tasks.push(v6_task);

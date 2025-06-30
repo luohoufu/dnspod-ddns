@@ -1,5 +1,5 @@
-pub mod client;
+pub mod dnspod;
 pub mod error;
 
-pub use client::DnspodClient;
+pub use dnspod::DnspodClient;
 pub use error::{DdnsError, Result};

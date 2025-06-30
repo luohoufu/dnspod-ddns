@@ -14,6 +14,13 @@ pub enum DdnsError {
 
     #[error("The provided IP address is not a valid IPv4 address: {0}")]
     InvalidIpFormat(String),
+
+    #[error("Failed to decode DNSPod API response. Body: '{body}'. Original error: {source}")]
+    ApiResponseDecode {
+        body: String,
+        #[source]
+        source: serde_json::Error,
+    },
 }
 
 /// A convenience type alias for `Result` with our custom error type.
