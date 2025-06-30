@@ -9,11 +9,11 @@ use clap::Parser;
 use dnspod::{API_BASE, DnspodClient};
 use probe::{NetworkProbe, NetworkStatus};
 use reqwest::Client;
-use std::env;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr};
 use tokio::task::JoinHandle;
 use tokio::time::{self, Duration};
 use tracing::{debug, error, info, trace, warn};
+use tracing_subscriber::EnvFilter;
 
 // The single, dual-stack-aware IP detection service.
 const IP_SERVICE_URL: &str = "https://test.ipw.cn";
@@ -32,15 +32,15 @@ async fn get_public_ip(client: &Client) -> Result<String> {
 /// The main application entry point.
 #[tokio::main]
 async fn main() -> Result<()> {
-    if env::var("RUST_LOG").is_err() {
-        // By wrapping this in an `unsafe` block, you are telling the compiler:
-        // "I guarantee that, at this point in the code, modifying this
-        // environment variable is thread-safe."
-        unsafe {
-            env::set_var("RUST_LOG", "info,ddns=info,dnspod=info");
-        }
-    }
-    tracing_subscriber::fmt::init();
+    let filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("info,ddns=info,dnspod=info"));
+
+    tracing_subscriber::fmt()
+        .compact()
+        .with_target(false)
+        .without_time()
+        .with_env_filter(filter)
+        .init();
 
     let args = Args::parse();
     let dnspod_client = DnspodClient::new(args.token, args.domain, args.sub_domain).await?;
