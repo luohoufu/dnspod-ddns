@@ -2,7 +2,7 @@
 use super::constants::*;
 use crate::error::{DdnsError, Result};
 use serde::Deserialize;
-use serde_with::{DisplayFromStr, serde_as};
+use serde_with::serde_as;
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
