@@ -4,7 +4,7 @@ After=network-online.target
 Wants=network-online.target
 
 [Service]
-ExecStart=/usr/local/bin/ddns --domain example.com --sub-domain ddns
+ExecStart=/usr/bin/ddns --domain example.com --sub-domain ddns
 EnvironmentFile=-/etc/default/ddns
 Environment="RUST_LOG=info"
 
