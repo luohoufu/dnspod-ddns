@@ -2,6 +2,7 @@
 use super::constants::*;
 use crate::error::{DdnsError, Result};
 use serde::Deserialize;
+use serde_with::{DisplayFromStr, serde_as};
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
@@ -37,15 +38,19 @@ struct ModifyResponse {
 }
 
 #[derive(Deserialize, Debug)]
+#[serde_as]
 pub struct CreatedRecord {
-    pub id: u64,
+    #[serde_as(as = "DisplayFromStr")]
+    pub id: String,
     pub name: String,
     pub status: String,
 }
 
 #[derive(Deserialize, Clone, Debug)]
+#[serde_as]
 pub struct ApiRecord {
-    pub id: u64,
+    #[serde_as(as = "DisplayFromStr")]
+    pub id: String,
     pub value: String,
     #[serde(rename = "type")]
     pub record_type: String,
@@ -54,7 +59,7 @@ pub struct ApiRecord {
 // --- Internal State Management ---
 #[derive(Default, Debug, Clone)]
 struct RecordState {
-    id: u64,
+    id: String,
     ip: String,
 }
 
@@ -133,7 +138,7 @@ impl DnspodClient {
                     record_type, cached_state.ip, current_ip
                 );
                 match self
-                    .modify_record(record_type, cached_state.id, current_ip)
+                    .modify_record(record_type, &cached_state.id, current_ip)
                     .await
                 {
                     Ok(_) => {
@@ -243,16 +248,14 @@ impl DnspodClient {
     async fn modify_record(
         &self,
         record_type: &str,
-        record_id: u64,
+        record_id: &str,
         ip: &str,
     ) -> Result<ApiRecord> {
         let mut params: HashMap<&'static str, &str> = HashMap::new();
-        let record_id_str = record_id.to_string();
-
         params.insert("login_token", &self.token);
         params.insert("format", "json");
         params.insert("domain", &self.domain);
-        params.insert("record_id", &record_id_str);
+        params.insert("record_id", record_id);
         params.insert("sub_domain", &self.sub_domain);
         params.insert("record_type", record_type);
         params.insert("record_line", "默认");
