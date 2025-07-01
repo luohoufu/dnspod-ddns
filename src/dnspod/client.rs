@@ -2,7 +2,7 @@
 use super::constants::*;
 use crate::error::{DdnsError, Result};
 use serde::Deserialize;
-use serde_with::serde_as;
+use serde_with::{DisplayFromStr, serde_as};
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
@@ -37,8 +37,8 @@ struct ModifyResponse {
     record: ApiRecord,
 }
 
-#[derive(Deserialize, Debug)]
 #[serde_as]
+#[derive(Deserialize, Debug)]
 pub struct CreatedRecord {
     #[serde_as(as = "DisplayFromStr")]
     pub id: String,
@@ -46,8 +46,8 @@ pub struct CreatedRecord {
     pub status: String,
 }
 
-#[derive(Deserialize, Clone, Debug)]
 #[serde_as]
+#[derive(Deserialize, Clone, Debug)]
 pub struct ApiRecord {
     #[serde_as(as = "DisplayFromStr")]
     pub id: String,
