@@ -20,7 +20,7 @@ struct Status {
 #[derive(Deserialize, Debug)]
 struct ListResponse {
     status: Status,
-    records: Option<Vec<ApiRecord>>,
+    records: Option<Vec<ListRecord>>,
 }
 
 //  Record.Create
@@ -34,7 +34,15 @@ struct CreateResponse {
 #[derive(Deserialize, Debug)]
 struct ModifyResponse {
     status: Status,
-    record: ApiRecord,
+    record: ModifiedRecord,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+pub struct ListRecord {
+    pub id: Id,
+    pub value: String,
+    #[serde(rename = "type")]
+    pub record_type: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -44,12 +52,12 @@ pub struct CreatedRecord {
     pub status: String,
 }
 
-#[derive(Deserialize, Clone, Debug)]
-pub struct ApiRecord {
-    pub id: Id,
-    pub value: String,
-    #[serde(rename = "type")]
-    pub record_type: String,
+#[derive(Deserialize, Debug)]
+pub struct ModifiedRecord {
+    pub _id: Id,
+    pub _name: String,
+    pub _value: String,
+    pub _status: String,
 }
 
 // --- Internal State Management ---
@@ -218,7 +226,7 @@ impl DnspodClient {
     }
 
     /// (Private) Calls Record.List API.
-    async fn list_records(&self) -> Result<Vec<ApiRecord>> {
+    async fn list_records(&self) -> Result<Vec<ListRecord>> {
         let mut params: HashMap<&'static str, &str> = HashMap::new();
         params.insert("login_token", &self.token);
         params.insert("format", "json");
@@ -246,7 +254,7 @@ impl DnspodClient {
         record_type: &str,
         record_id: &str,
         ip: &str,
-    ) -> Result<ApiRecord> {
+    ) -> Result<ModifiedRecord> {
         let mut params: HashMap<&'static str, &str> = HashMap::new();
         params.insert("login_token", &self.token);
         params.insert("format", "json");
