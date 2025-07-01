@@ -2,6 +2,7 @@ mod args;
 mod dnspod;
 mod error;
 mod probe;
+mod utils;
 
 use anyhow::Result;
 use args::Args;

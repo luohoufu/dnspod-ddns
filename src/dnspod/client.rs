@@ -1,8 +1,8 @@
 // Import constants from the sibling module.
 use super::constants::*;
 use crate::error::{DdnsError, Result};
+use crate::utils::Id;
 use serde::Deserialize;
-use serde_with::{DisplayFromStr, serde_as};
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
@@ -37,20 +37,16 @@ struct ModifyResponse {
     record: ApiRecord,
 }
 
-#[serde_as]
 #[derive(Deserialize, Debug)]
 pub struct CreatedRecord {
-    #[serde_as(as = "DisplayFromStr")]
-    pub id: String,
+    pub id: Id,
     pub name: String,
     pub status: String,
 }
 
-#[serde_as]
 #[derive(Deserialize, Clone, Debug)]
 pub struct ApiRecord {
-    #[serde_as(as = "DisplayFromStr")]
-    pub id: String,
+    pub id: Id,
     pub value: String,
     #[serde(rename = "type")]
     pub record_type: String,
@@ -178,7 +174,7 @@ impl DnspodClient {
                 );
                 let mut state = self.state.lock().await; // Re-acquire lock
                 let new_state = RecordState {
-                    id: created_record.id,
+                    id: created_record.id.to_string(),
                     ip: current_ip.to_string(),
                 };
                 if is_ipv4 {
@@ -204,7 +200,7 @@ impl DnspodClient {
 
         for record in records {
             let record_state = RecordState {
-                id: record.id,
+                id: record.id.to_string(),
                 ip: record.value,
             };
             if record.record_type.eq_ignore_ascii_case("A") {
