@@ -54,9 +54,13 @@ pub struct CreatedRecord {
 
 #[derive(Deserialize, Debug)]
 pub struct ModifiedRecord {
+    #[serde(rename = "id")]
     pub _id: Id,
+    #[serde(rename = "name")]
     pub _name: String,
+    #[serde(rename = "value")]
     pub _value: String,
+    #[serde(rename = "status")]
     pub _status: String,
 }
 
