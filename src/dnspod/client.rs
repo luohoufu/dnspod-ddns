@@ -34,7 +34,6 @@ struct CreateResponse {
 #[derive(Deserialize, Debug)]
 struct ModifyResponse {
     status: Status,
-    record: ModifiedRecord,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -50,18 +49,6 @@ pub struct CreatedRecord {
     pub id: Id,
     pub name: String,
     pub status: String,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct ModifiedRecord {
-    #[serde(rename = "id")]
-    pub _id: Id,
-    #[serde(rename = "name")]
-    pub _name: String,
-    #[serde(rename = "value")]
-    pub _value: String,
-    #[serde(rename = "status")]
-    pub _status: String,
 }
 
 // --- Internal State Management ---
@@ -253,12 +240,7 @@ impl DnspodClient {
     }
 
     /// (Private) Calls Record.Modify API.
-    async fn modify_record(
-        &self,
-        record_type: &str,
-        record_id: &str,
-        ip: &str,
-    ) -> Result<ModifiedRecord> {
+    async fn modify_record(&self, record_type: &str, record_id: &str, ip: &str) -> Result<()> {
         let mut params: HashMap<&'static str, &str> = HashMap::new();
         params.insert("login_token", &self.token);
         params.insert("format", "json");
@@ -278,7 +260,7 @@ impl DnspodClient {
                 message: res.status.message,
             });
         }
-        Ok(res.record)
+        Ok(())
     }
 
     /// (Private) Calls Record.Create API.
