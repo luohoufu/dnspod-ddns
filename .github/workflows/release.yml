@@ -118,7 +118,7 @@ jobs:
           OUTPUT: CHANGELOG.md
 
       - name: Download all release assets
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           path: release-assets
           pattern: release-asset-*
