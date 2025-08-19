@@ -1,5 +1,5 @@
-mod client;
 mod constants;
+mod dnspod;
 
-pub use client::DnspodClient;
 pub use constants::API_BASE;
+pub use dnspod::DnspodClient;

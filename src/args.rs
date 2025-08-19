@@ -13,9 +13,16 @@ pub struct Args {
     #[arg(short, long, env = "DNSPOD_TOKEN")]
     pub token: String,
     /// Check interval in seconds. Set to 0 to run only once.
-    #[arg(short, long, env = "DNSPOD_INTERVAL", default_value_t = 10)]
+    #[arg(short, long, env = "UPDATE_INTERVAL_SECS", default_value_t = 10)]
     pub interval: u64,
     /// Enable IPv6 (AAAA record) update.
-    #[arg(long, env = "DNSPOD_IPV6_ENABLED", default_value_t = false)]
+    #[arg(long, env = "ENABLE_IPV6", default_value_t = false)]
     pub ipv6: bool,
+
+    /// Your notify http server url for update ip
+    #[arg(long, env = "HTTP_URL")]
+    pub http_url: Option<String>,
+    /// Your notify http server access token
+    #[arg(long, env = "HTTP_TOKEN")]
+    pub http_token: Option<String>,
 }

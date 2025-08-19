@@ -81,11 +81,11 @@ cargo build --release
 
 -i, --interval <INTERVAL>
 检查间隔时间（秒）。设置为 0 表示只运行一次。
-[环境变量: DNSPOD_INTERVAL=, 默认值: 300]
+[环境变量: UPDATE_INTERVAL_SECS=, 默认值: 300]
 
 --ipv6
 启用 IPv6 (AAAA 记录) 更新。
-[环境变量: DNSPOD_IPV6_ENABLED=]
+[环境变量: ENABLE_IPV6=]
 
 -h, --help
 打印帮助信息
@@ -114,8 +114,8 @@ cargo build --release
 export DNSPOD_DOMAIN="example.com"
 export DNSPOD_SUB_DOMAIN="home"
 export DNSPOD_TOKEN="YOUR_ID,YOUR_TOKEN"
-export DNSPOD_IPV6_ENABLED=true
-export DNSPOD_INTERVAL=600 # 每 10 分钟检查一次
+export ENABLE_IPV6=true
+export UPDATE_INTERVAL_SECS=600 # 每 10 分钟检查一次
 
 # 现在可以直接运行命令，无需任何参数
 ./ddns

@@ -81,11 +81,11 @@ Your DNSPod API token, in "ID,Token" format
 
 -i, --interval <INTERVAL>
 Check interval in seconds. Set to 0 to run only once.
-[env: DNSPOD_INTERVAL=, default: 300]
+[env: UPDATE_INTERVAL_SECS=, default: 300]
 
 --ipv6
 Enable IPv6 (AAAA record) update.
-[env: DNSPOD_IPV6_ENABLED=]
+[env: ENABLE_IPV6=]
 
 -h, --help
 Print help information
@@ -114,8 +114,8 @@ This is highly recommended for running as a service or in a container.
 export DNSPOD_DOMAIN="example.com"
 export DNSPOD_SUB_DOMAIN="home"
 export DNSPOD_TOKEN="YOUR_ID,YOUR_TOKEN"
-export DNSPOD_IPV6_ENABLED=true
-export DNSPOD_INTERVAL=600 # Check every 10 minutes
+export UPDATE_INTERVAL_SECS=600 # Check every 10 minutes
+export ENABLE_IPV6=true
 
 # Now you can just run the command without arguments
 ./ddns

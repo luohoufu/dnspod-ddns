@@ -1,4 +1,3 @@
-// Import constants from the sibling module.
 use super::constants::*;
 use crate::error::{DdnsError, Result};
 use crate::utils::Id;
@@ -102,7 +101,7 @@ impl DnspodClient {
 
     /// The main update logic. Checks if the IP has changed and calls the appropriate API.
     #[instrument(skip(self), err, fields(ip = %current_ip))]
-    pub async fn update_if_needed(&self, current_ip: &str) -> Result<()> {
+    pub async fn update_if_needed(&self, current_ip: &str) -> Result<bool> {
         let is_ipv4 = match current_ip.parse::<IpAddr>() {
             Ok(IpAddr::V4(_)) => true,
             Ok(IpAddr::V6(_)) => false,
@@ -126,7 +125,7 @@ impl DnspodClient {
                         "✅ [{}] IP has not changed from '{}'. No update needed.",
                         record_type, cached_state.ip
                     );
-                    return Ok(());
+                    return Ok(false);
                 }
                 info!(
                     "🔄 [{}] IP has changed from '{}' to '{}'. Updating record...",
@@ -183,7 +182,7 @@ impl DnspodClient {
                 }
             }
         }
-        Ok(())
+        Ok(true)
     }
 
     /// Fetches all records and updates the internal state.
