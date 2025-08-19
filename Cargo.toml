@@ -1,6 +1,6 @@
 [package]
 name = "ddns"
-version = "1.3.3"
+version = "1.3.4"
 authors = ["hardy <luohf@infinilabs.com>"]
 edition = "2024"
 rust-version = "1.87.0"                                                      # MSRV
