@@ -8,7 +8,9 @@ A modern, fast, and reliable DDNS (Dynamic DNS) client for [DNSPod](https://www.
 [![Release](https://github.com/luohoufu/dnspod-ddns/actions/workflows/release.yml/badge.svg)](https://github.com/luohoufu/dnspod-ddns/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-`dnspod-ddns` automatically checks your public IP address and updates your DNSPod DNS records, ensuring your domain always points to your home network, server, or any device with a dynamic IP.
+`dnspod-ddns` automatically checks your public IP address and updates your DNSPod DNS records. It ensures your domain always points to your home network, server, or any device with a dynamic IP.
+
+Additionally, it can send an **instant HTTP notification** to a service like a reverse proxy (e.g., OpenResty/Nginx), allowing it to immediately update its backend IP without waiting for DNS propagation.
 
 ---
 
@@ -17,6 +19,7 @@ A modern, fast, and reliable DDNS (Dynamic DNS) client for [DNSPod](https://www.
 - **Blazing Fast**: Built with Rust for minimal resource usage and high performance.
 - **Intelligent & Robust**: Quietly waits for network recovery during outages using exponential backoff, preventing log spam and unnecessary API requests.
 - **IPv4 & IPv6 Ready**: Simultaneously updates both `A` (IPv4) and `AAAA` (IPv6) records.
+- **Instant HTTP Notifier (Optional)**: Can immediately notify a configurable HTTP endpoint (like a reverse proxy) after a successful IP update, bypassing DNS TTL delays.
 - **Cross-Platform**: Pre-compiled binaries are available for Linux, macOS, and Windows.
 - **Easy to Configure**: Configure via command-line arguments or environment variables.
 - **Run Anywhere**: Works perfectly in a Docker container, on a Raspberry Pi, your NAS, or any server.
@@ -55,36 +58,44 @@ cargo build --release
 
 ## 🚀 Usage
 
-The tool is configured via command-line arguments or environment variables.
+The tool is configured via command-line arguments or environment variables. All DNSPod-related arguments are mandatory.
 
 ### Command-Line Arguments
 
 Run `ddns --help` to see all available options:
 
 ```text
-A modern, async DDNS tool for DNSPod with IPv4/IPv6 support.
+A modern, async DDNS tool for DNSPod with IPv4/IPv6 support and an optional HTTP notifier.
 
-Usage: ddns [OPTIONS] --domain <DOMAIN> --sub-domain <SUB_DOMAIN> --token <TOKEN>
+Usage: ddns [OPTIONS] --token <TOKEN> --domain <DOMAIN> --sub-domain <SUB_DOMAIN>
 
 Options:
--d, --domain <DOMAIN>
-The domain name, e.g., "example.com"
-[env: DNSPOD_DOMAIN=]
-
--s, --sub-domain <SUB_DOMAIN>
-The sub-domain name, e.g., "home"
-[env: DNSPOD_SUB_DOMAIN=]
-
--t, --token <TOKEN>
+--token <TOKEN>
 Your DNSPod API token, in "ID,Token" format
 [env: DNSPOD_TOKEN=]
 
+--domain <DOMAIN>
+The domain name for the DNSPod target, e.g., "example.com"
+[env: DNSPOD_DOMAIN=]
+
+--sub-domain <SUB_DOMAIN>
+The sub-domain name for the DNSPod target, e.g., "home"
+[env: DNSPOD_SUB_DOMAIN=]
+
+--http-url <HTTP_URL>
+(Optional) The URL for the HTTP GET notifier. Use ?ip={IP_ADDRESS} as a placeholder
+[env: HTTP_URL=]
+
+--http-token <HTTP_TOKEN>
+(Optional) A Bearer token for authenticating with the HTTP API
+[env: HTTP_TOKEN=]
+
 -i, --interval <INTERVAL>
-Check interval in seconds. Set to 0 to run only once.
+Check interval in seconds. Set to 0 to run only once
 [env: UPDATE_INTERVAL_SECS=, default: 300]
 
 --ipv6
-Enable IPv6 (AAAA record) update.
+Enable IPv6 (AAAA record) update
 [env: ENABLE_IPV6=]
 
 -h, --help
@@ -96,6 +107,8 @@ Print version information
 
 ### Quick Start Example
 
+#### Example 1: Basic DNSPod Update
+
 ```bash
 # Check every 10 seconds to update both A and AAAA records for home.example.com
 ./ddns \
@@ -106,14 +119,35 @@ Print version information
 --ipv6
 ```
 
+#### Example 2: With HTTP Notifier
+
+This is useful for instantly updating a reverse proxy's backend IP.
+
+```bash
+./ddns \
+--domain "example.com" \
+--sub-domain "home" \
+--token "YOUR_ID,YOUR_TOKEN" \
+--http-url "https://your-proxy.com/update-ip?ip={IP_ADDRESS}" \
+--http-token "YOUR_PROXY_SECRET_TOKEN" \
+--interval 60
+```
+
 ### Using Environment Variables
 
 This is highly recommended for running as a service or in a container.
 
 ```bash
+# --- Required DNSPod Settings ---
 export DNSPOD_DOMAIN="example.com"
 export DNSPOD_SUB_DOMAIN="home"
 export DNSPOD_TOKEN="YOUR_ID,YOUR_TOKEN"
+
+# --- Optional HTTP Notifier Settings ---
+export HTTP_URL="https://your-proxy.com/update-ip?ip={IP_ADDRESS}"
+export HTTP_TOKEN="YOUR_PROXY_SECRET_TOKEN"
+
+# --- General Settings ---
 export UPDATE_INTERVAL_SECS=600 # Check every 10 minutes
 export ENABLE_IPV6=true
 
@@ -127,42 +161,46 @@ export ENABLE_IPV6=true
 
 For a reliable, always-on setup, running `ddns` as a `systemd` service is the best approach.
 
-1. **Create a dedicated user (for security)**:
-```bash
-sudo useradd --system --no-create-home --shell /bin/false ddns-user
-```
-
-2. **Create an environment file for your token**:
-Create `/etc/default/ddns` and add your token to it. This keeps secrets out of your service file.
+1. **Create an environment file for your secrets**:
+Create `/etc/default/ddns` and add your secrets to it. This keeps them out of your public service file.
 ```
 # /etc/default/ddns
 DNSPOD_TOKEN="YOUR_ID,YOUR_TOKEN"
+HTTP_TOKEN="YOUR_PROXY_SECRET_TOKEN"
 ```
 Set strict permissions: `sudo chmod 600 /etc/default/ddns`
 
-3. **Create the systemd service file**:
-Create `/etc/systemd/system/ddns.service` with the following content. **Remember to change your domain and sub-domain!**
+2. **Create the systemd service file**:
+Create `/etc/systemd/system/ddns.service` with the following content. **Remember to change your domain, sub-domain, and API URL!**
 
 ```ini
 [Unit]
-Description=DNSPod DDNS Client
+Description=DDNS Client for DNSPod with HTTP Notifier
 After=network-online.target
 Wants=network-online.target
 
 [Service]
-# Adjust your domain, sub-domain, and other flags here
-ExecStart=/usr/local/bin/ddns --domain example.com --sub-domain home --ipv6
+# --- Configure your domains and API URL here ---
+ExecStart=/usr/local/bin/ddns \
+--domain example.com \
+--sub-domain home \
+--http-url "https://your-proxy.com/update-ip?ip={IP_ADDRESS}" \
+--ipv6
 
-# Load token from the environment file
+# --- Load secrets from the environment file ---
 EnvironmentFile=-/etc/default/ddns
 # Set log level (info, warn, error, debug, trace)
 Environment="RUST_LOG=info"
 
-# Run as a non-root user
-User=ddns-user
-Group=ddns-user
+# --- Run as a non-root user for security ---
+User=nobody
+Group=nogroup
+# Alternatively, create a dedicated user:
+# sudo useradd --system --no-create-home --shell /bin/false ddns-user
+# User=ddns-user
+# Group=ddns-user
 
-# Service management
+# --- Service management ---
 Type=simple
 Restart=on-failure
 RestartSec=30s
@@ -172,7 +210,7 @@ TimeoutStopSec=30s
 WantedBy=multi-user.target
 ```
 
-4. **Enable and start the service**:
+3. **Enable and start the service**:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable ddns.service
