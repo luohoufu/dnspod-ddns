@@ -18,8 +18,9 @@ impl HttpClient {
     }
 
     /// Sends a GET request with the new IP address in the URL.
-    #[instrument(skip(self), name = "http_get_notify", fields(url=%self.url_template))]
+    #[instrument(skip(self), name = "http_get_notify", fields(new_ip))]
     pub async fn notify(&self, new_ip: &str) -> Result<()> {
+        tracing::Span::current().record("new_ip", &new_ip);
         info!("🚀 Sending notification to HTTP Server...");
 
         // The URL template should contain the placeholder for the IP address.
@@ -44,7 +45,7 @@ impl HttpClient {
                 }
             }
             Err(e) => {
-                warn!("❗️ Error sending HTTP GET notification: {}", e);
+                warn!("❗️ Error sending notification request: {}", e);
             }
         }
         // As a notifier, we log errors but don't fail the main process.
