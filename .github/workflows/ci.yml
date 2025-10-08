@@ -35,7 +35,7 @@ jobs:
     needs: ["tests"]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -71,7 +71,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -102,7 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -134,7 +134,7 @@ jobs:
       security-events: write # to upload sarif results
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -152,7 +152,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload analysis results to GitHub
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: rust-clippy-results.sarif
           wait-for-processing: true
@@ -160,9 +160,9 @@ jobs:
     name: Codespell
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up Python 3.8
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.8
       - name: Install dependencies
@@ -176,7 +176,7 @@ jobs:
     name: Misspell
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Install
         run: wget -O - -q https://git.io/misspell | sh -s -- -b .
       - name: Misspell
@@ -186,6 +186,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Actions Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Spell Check Repo
         uses: crate-ci/typos@master
