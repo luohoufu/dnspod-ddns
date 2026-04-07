@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install rust target
         run: rustup target add ${{ matrix.target }}
@@ -90,7 +90,7 @@ jobs:
           ls -lr $GITHUB_WORKSPACE
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: release-asset-${{ matrix.target }}
           path: ${{ steps.prep.outputs.asset_name }}
@@ -104,7 +104,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -118,7 +118,7 @@ jobs:
           OUTPUT: CHANGELOG.md
 
       - name: Download all release assets
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           path: release-assets
           pattern: release-asset-*
